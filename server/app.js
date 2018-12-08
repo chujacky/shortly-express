@@ -17,8 +17,10 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 
 
-app.get('/', (req, res) => {
-  res.render('index');
+app.get('/', (req, res, next) => {
+  Auth.createSession(req, res, () => {
+    res.render('index');
+  });
 });
 
 app.get('/create', (req, res) => {
@@ -79,7 +81,15 @@ app.post('/signup', (req, res, next) => {
   var password = req.body.password;
   models.Users.create({username, password})
     .then(() => {
-      res.status(201).redirect('/');
+      Auth.createSession(req, res, () => {
+        models.Users.get({username: username})
+          .then((result) => {
+            return models.Sessions.getAll();
+          })
+          .then((session) => {
+            console.log(session);
+          }) ;
+      });
     })
     .catch(() => {
       res.status(404).redirect('/signup');
