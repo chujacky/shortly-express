@@ -19,14 +19,16 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 app.get('/', (req, res, next) => {
   Auth.createSession(req, res, () => {
-    Auth.verifySession(req, res, () => {
-      res.render('index');
-    });
+      Auth.verifySession(req, res, () => {
+        res.render('index');
+      });
   });
 });
 
-app.get('/create', (req, res) => {
-  res.render('index');
+app.get('/create', (req, res, next) => {
+   Auth.verifySession(req, res, () => {
+        res.render('index');
+    });
 });
 
 app.get('/links', (req, res, next) => {
@@ -120,8 +122,13 @@ app.post('/login', (req, res, next) => {
     });
 });
 
+app.get('/login', (req, res) => {
+  res.render('login');
+})
+
 app.get('/logout', (req, res, next) => {
   var hash = req.headers.cookie.split('=')[1];
+  
   models.Sessions.delete({hash: hash})
     .then(() => {
       res.status(200).redirect('/login');
