@@ -19,7 +19,9 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 app.get('/', (req, res, next) => {
   Auth.createSession(req, res, () => {
-    res.render('index');
+    Auth.verifySession(req, res, () => {
+      res.render('index');
+    });
   });
 });
 
@@ -82,13 +84,16 @@ app.post('/signup', (req, res, next) => {
   models.Users.create({username, password})
     .then(() => {
       Auth.createSession(req, res, () => {
-        models.Users.get({username: username})
-          .then((result) => {
-            return models.Sessions.getAll();
-          })
+        models.Sessions.get({hash: req.session.hash})
           .then((session) => {
-            console.log(session);
-          }) ;
+            return models.Users.get({username: username});
+          })
+          .then((user) => {
+            return models.Sessions.update({id: user.id}, {userId: user.id}); 
+          })
+          .then(() => {
+            res.status(200).redirect('/');
+          });
       });
     })
     .catch(() => {
@@ -115,6 +120,13 @@ app.post('/login', (req, res, next) => {
     });
 });
 
+app.get('/logout', (req, res, next) => {
+  var hash = req.headers.cookie.split('=')[1];
+  models.Sessions.delete({hash: hash})
+    .then(() => {
+      res.status(200).redirect('/login');
+    });
+});
 /************************************************************/
 // Handle the code parameter route last - if all other routes fail
 // assume the route is a short code and try and handle it here.

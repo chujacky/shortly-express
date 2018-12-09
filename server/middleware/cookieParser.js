@@ -4,10 +4,7 @@ const parseCookies = (req, res, next) => {
 
   var cookies = req.headers.cookie;
   if (!cookies) {
-    return auth.createSession(req, res, next)
-      .then(() => {
-        console.log('dllm');
-      });
+    auth.createSession(req, res, next);
   } else {
     var obj = {};
     cookies = cookies.split('; ');
